@@ -1,0 +1,9 @@
+*.pth
+.vscode/*
+result/*
+_vizdoom.ini
+learning_pytorch.py
+learning_tensorflow.py
+not_work/*
+*.pyc
+__pycache__

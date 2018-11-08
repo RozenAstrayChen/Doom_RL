@@ -74,3 +74,8 @@ class ACNet(nn.Module):
         #hx, cx = self.lstm(x, (hx, cx))
 
         return F.softmax(action_scores, dim=-1),   state_values
+
+    def get_v(self, inputs):
+        a_prob, v = self.forward(inputs)
+
+        return v

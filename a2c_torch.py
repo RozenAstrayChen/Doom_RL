@@ -30,13 +30,15 @@ SavedAction = namedtuple('SavedAction', ['log_prob', 'value'])
 
 
 class AC(Policy):
-
     def __init__(self, map=map_health):
         super(AC, self).__init__(map)
         self.map = map
         self.model = ACNet(len(self.action_available)).cuda()
         self.saved_actions = []
         self.rewards = []
+        # a2c need s, s'
+        self.s_ = []
+        self.done = []
         self.optimizer = torch.optim.Adam(
             self.model.parameters(), lr=learning_rate)
 
@@ -67,31 +69,42 @@ class AC(Policy):
         saved_actions = self.saved_actions
         policy_losses = []
         value_losses = []
-        rewards = []
-        for r in self.rewards[::-1]:
-            R = r + gamma * R
-            rewards.insert(0, R)
-        rewards = torch.tensor(rewards)
+        rewards = np.array(self.rewards)
+        dones = np.array(self.done)
+        s_ = np.array(self.s_)
+        s_ = Variable(torch.from_numpy(s_)).float().cuda()
+        s_detach = s_.detach()
+        # calculate v‘
+        v_ = self.model.get_v(s_detach)
+
         # REINFORCE
         rewards = (rewards - rewards.mean()) / (rewards.std() + self.eps)
-        for (log_prob, value), r in zip(saved_actions, rewards):
-            reward = r - value.item()
+        for (log_prob, value), r, n_value, done in zip(saved_actions, rewards,
+                                                       v_, dones):
+            qs = r + gamma * (1 - done) * n_value.item()
+            #qs = r + gamma * n_value.item()
+            td_error = qs - value.item()
 
-            log_prob = log_prob.to(self.device)
-            reward = reward.to(self.device)
+            log_prob = log_prob.cuda()
+            #reward = reward.cuda()
 
-            policy_losses.append(-log_prob * reward)
+            policy_losses.append(-log_prob * td_error)
+
             value_losses.append(
                 F.smooth_l1_loss(value[0],
-                                 torch.tensor([r]).to(self.device)))
+                                 torch.tensor(qs).cuda()))
         self.optimizer.zero_grad()
-        loss = torch.stack(policy_losses).sum() + torch.stack(
-            value_losses).sum()
+        loss = torch.stack(
+            policy_losses).sum() + torch.stack(value_losses).sum()
         loss.backward()
         self.optimizer.step()
         del self.rewards[:]
         del self.saved_actions[:]
+        del self.done[:]
+        del self.s_[:]
 
+        return loss, torch.stack(value_losses).sum(), torch.stack(
+            policy_losses).sum()
 
     '''
     Overwrite train model
@@ -102,47 +115,66 @@ class AC(Policy):
             self.model = self.load_model(actor_cirtic, num)
         train_episodes_finished = 0
         rewards_collect = []
+        a_loss_collect = []
+        c_loss_collect = []
+        loss_collect = []
         for iterator in range(0, iterators):
             for epoch in range(train_episodes):
                 self.game.new_episode()
                 current_health = 100
                 pervious_health = 100
-                train_scores = []
+                s1 = self.preprocess(self.game.get_state().screen_buffer)
                 while True:
-                    s1 = self.preprocess(self.game.get_state().screen_buffer)
-                    
-                    #s1 = self.frames_reshape(s1)
 
                     action_index = self.choose_action(s1)
-                    self.game.set_action(
-                        self.action_available[action_index])
+                    self.game.set_action(self.action_available[action_index])
                     self.game.advance_action(frame_skip)
                     '''
                     reward shaping
                     '''
-                    #reward = self.reward_shaping(pervious_health,current_health)
                     reward = self.game.get_last_reward()
-                    
-                    
-                    self.rewards.append(reward)
-                    pervious_health = current_health
+                    done = self.game.is_episode_finished()
 
-                    if self.game.is_episode_finished():
+                    if done:
+
+                        s2 = np.zeros(
+                            (3, resolution[0], resolution[1]), dtype=np.float)
+
+                        #s2 = None
+                    else:
+                        s2 = self.preprocess(
+                            self.game.get_state().screen_buffer)
+
+                    self.done.append(done)
+                    self.rewards.append(reward)
+                    self.s_.append(s2)
+
+                    s1 = s2
+
+                    if done:
                         train_episodes_finished += 1
-                        train_scores.append(self.game.get_total_reward())
+                        train_scores = self.game.get_total_reward()
 
                         break
-                self.update_policy()
-                if (train_episodes_finished % 20 == 0):
+                loss ,c_loss, a_loss = self.update_policy()
+                if (train_episodes_finished % 10 == 0):
                     print("%d training episodes played." %
                           train_episodes_finished)
                     rewards_collect.append(train_scores)
-                    train_scores = np.array(train_scores)
-                    print("Results: mean: %.1f +/- %.1f," %
-                          (train_scores.mean(), train_scores.std()))
+                    loss_collect.append(loss)
+                    c_loss_collect.append(c_loss)
+                    a_loss_collect.append(a_loss)
+
+                    print(
+                        "Results: rewards: {}, c_loss: {}, a_loss: {}".format(
+                            train_scores, c_loss, a_loss))
+                    print("Loss: {}".format(loss))
                     self.plot_durations(rewards_collect)
+                    self.plot_loss(loss_collect, a_loss_collect, c_loss_collect)
+                    
             self.save_model(actor_cirtic, iterator + 1, self.model)
-        self.plot_save(rewards_collect)
+        self.plot_save(rewards_collect, name='a2c')
+        self.plot_save_loss(loss_collect, a_loss_collect, c_loss_collect, name='a2c')
         self.game.close()
 
     def watch_model(self, num, delay=False):
@@ -167,6 +199,5 @@ class AC(Policy):
 
 
 ac = AC()
-#ac.train_model(load=False, num=1, iterators=5)
+ac.train_model(load=False, num=1, iterators=5)
 #ac.watch_model(5)
-

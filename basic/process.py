@@ -18,26 +18,43 @@ class Process:
     def __init__(self):
         pass
 
-    def plot_save(self, rewards):
-        plt.figure(2)
+    def plot_save(self, rewards, name='total'):
+        plt.figure(1)
         plt.clf()
         durations_t = torch.FloatTensor(rewards)
         plt.title('Training...')
         plt.xlabel('Episode')
         plt.ylabel('Duration')
         plt.plot(durations_t.numpy())
-        plt.savefig('./total.jpg')
+        name = './'+ str(name)+'_reward' + '.jpg'
+        plt.savefig(name)
+
+    def plot_save_loss(self, loss, a_loss, c_loss, name='rl'):
+        plt.figure(2)
+        plt.clf()
+        loss = torch.FloatTensor(loss)
+        a_loss = torch.FloatTensor(a_loss)
+        c_loss = torch.FloatTensor(c_loss)
+        plt.title('Loss')
+        plt.xlabel('Episode*10')
+        plt.ylabel('Duration')
+        plt.plot(loss.numpy(), color='green', label='loss')
+        plt.plot(a_loss.numpy(), color='red', label='a_loss')
+        plt.plot(c_loss.numpy(), color='blue', label='c_loss')
+        name = './'+ str(name)+'_loss' + '.jpg'
+        plt.savefig(name)
+
 
     '''
     plt reward immediate
     '''
 
     def plot_durations(self, rewards):
-        plt.figure(2)
+        plt.figure(1)
         plt.clf()
         durations_t = torch.FloatTensor(rewards)
         plt.title('Training...')
-        plt.xlabel('Episode*20')
+        plt.xlabel('Episode*10')
         plt.ylabel('Duration')
         plt.plot(durations_t.numpy())
         # Take 100 episode averages and plot them too
@@ -49,6 +66,23 @@ class Process:
         """
         plt.pause(0.001)  # pause a bit so that plots are updated
 
+    '''
+    plt loss
+    '''
+    def plot_loss(self, loss, a_loss, c_loss):
+        plt.figure(2)
+        plt.clf()
+        loss = torch.FloatTensor(loss)
+        a_loss = torch.FloatTensor(a_loss)
+        c_loss = torch.FloatTensor(c_loss)
+        plt.title('Loss')
+        plt.xlabel('Episode*10')
+        plt.ylabel('Duration')
+        plt.plot(loss.numpy(), color='red', label='loss')
+        plt.plot(a_loss.numpy(), color='green', label='a_loss')
+        plt.plot(c_loss.numpy(), color='blue', label='c_loss')
+        plt.legend()
+        plt.pause(0.001)  # pause a bit so that plots are updated
 
     '''
     Subsampling image and convert to numpy types
@@ -120,7 +154,7 @@ class Process:
     '''
 
     def save_model(self, name, num, model):
-        current_name = './' + str(num) + name
+        current_name = './result' + str(num) + name
         torch.save(model, current_name)
 
     '''
@@ -128,7 +162,7 @@ class Process:
     '''
 
     def load_model(self, name, num):
-        current_name = './' + str(num) + name 
+        current_name = './result' + str(num) + name 
         print("Loading model from: ", current_name)
         return torch.load(current_name)
 

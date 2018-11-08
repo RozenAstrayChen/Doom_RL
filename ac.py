@@ -41,8 +41,7 @@ class AC(Policy):
             self.model.parameters(), lr=learning_rate)
 
     def convert2Tensor(self, state):
-        state = torch.from_numpy(state)
-        state = Variable(state)
+        state = Variable(torch.from_numpy(state)).float().cuda()
         state = state.to(self.device)
         # print(state.shape)
         return self.model(state)
@@ -52,7 +51,7 @@ class AC(Policy):
     '''
 
     def choose_action(self, state):
-        state = state.reshape([1, 3, resolution[0], resolution[1]])
+        state = state[np.newaxis, :]
         probs, state_value = self.convert2Tensor(state)
         m = Categorical(probs)
         action = m.sample()
@@ -92,7 +91,9 @@ class AC(Policy):
         self.optimizer.step()
         del self.rewards[:]
         del self.saved_actions[:]
-'
+
+        return loss, torch.stack(value_losses).sum(), torch.stack(
+            policy_losses).sum()
 
     '''
     Overwrite train model
@@ -103,15 +104,15 @@ class AC(Policy):
             self.model = self.load_model(actor_cirtic, num)
         train_episodes_finished = 0
         rewards_collect = []
+        a_loss_collect = []
+        c_loss_collect = []
+        loss_collect = []
         for iterator in range(0, iterators):
-            for epoch in range(total_episode):
+            for epoch in range(train_episodes):
                 self.game.new_episode()
-                current_health = 100
-                pervious_health = 100
                 train_scores = []
-                for _ in range(learning_step_per_epoch):
+                while True:
                     s1 = self.preprocess(self.game.get_state().screen_buffer)
-                    current_health = self.game.get_state().game_variables[0]
                     s1 = self.frames_reshape(s1)
 
                     action_index = self.choose_action(s1)
@@ -124,37 +125,39 @@ class AC(Policy):
                     #reward = self.reward_shaping(pervious_health,current_health)
                     reward = self.game.get_last_reward()
                     #print(reward)
-                    '''
-                    print('pervious health=',pervious_health)
-                    print('current health=',current_health)
-                    print('==============================')
-                    '''
+                    
                     self.rewards.append(reward)
-                    pervious_health = current_health
 
                     if self.game.is_episode_finished():
                         train_episodes_finished += 1
                         train_scores.append(self.game.get_total_reward())
 
                         break
-                self.update_policy()
-                if (train_episodes_finished % 20 == 0):
+                loss ,c_loss, a_loss = self.update_policy()
+                if (train_episodes_finished % 10 == 0):
                     print("%d training episodes played." %
                           train_episodes_finished)
                     rewards_collect.append(train_scores)
-                    train_scores = np.array(train_scores)
-                    print("Results: mean: %.1f +/- %.1f," %
-                          (train_scores.mean(), train_scores.std()))
+                    loss_collect.append(loss)
+                    c_loss_collect.append(c_loss)
+                    a_loss_collect.append(a_loss)
+
+                    print(
+                        "Results: rewards: {}, c_loss: {}, a_loss: {}".format(
+                            train_scores, c_loss, a_loss))
+                    print("Loss: {}".format(loss))
                     self.plot_durations(rewards_collect)
+                    self.plot_loss(loss_collect, a_loss_collect, c_loss_collect)
             self.save_model(actor_cirtic, iterator + 1, self.model)
-        self.plot_save(rewards_collect)
+        self.plot_save(rewards_collect, name='a2c')
+        self.plot_save_loss(loss_collect, a_loss_collect, c_loss_collect, name='a2c')
         self.game.close()
 
     def watch_model(self, num, delay=False):
         import time
         self.model = self.load_model(actor_cirtic, num)
         self.game = init_doom(scenarios=self.map, visable=True)
-        for _ in range(watch_step_per_epoch):
+        for _ in range(enjoy_episodes):
             self.game.new_episode()
             while not self.game.is_episode_finished():
                 state = self.preprocess(self.game.get_state().screen_buffer)
@@ -170,8 +173,8 @@ class AC(Policy):
 
         self.game.close()
 
-'''
+
 ac = AC()
-#ac.train_model(load=True, num=1, iterators=5)
-ac.watch_model(5)
-'''
+ac.train_model(load=False, num=1, iterators=5)
+#ac.watch_model(5)
+

@@ -154,7 +154,7 @@ class Process:
     '''
 
     def save_model(self, name, num, model):
-        current_name = './result' + str(num) + name
+        current_name = './result/' + str(num) + name
         torch.save(model, current_name)
 
     '''

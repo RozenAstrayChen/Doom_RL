@@ -105,7 +105,9 @@ class PPO_batch():
                 kernel_initializer=w_initializer,
                 trainable=trainable
             )
+            conv2_flatten = tf.layers.flatten(conv2)
 
+            '''
             conv3 = tf.layers.conv2d(
                 conv2,
                 filters=64,
@@ -115,9 +117,9 @@ class PPO_batch():
                 kernel_initializer=w_initializer,
                 trainable=trainable)
             conv3_flatten = tf.layers.flatten(conv3)
-
+            '''
             f_dense = tf.layers.dense(
-                conv3_flatten,
+                conv2_flatten,
                 512,
                 tf.nn.relu,
                 kernel_initializer=w_initializer,

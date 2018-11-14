@@ -118,7 +118,7 @@ class Process:
         return preprocessed_frame
     
     def frames_reshape(self, frame):
-        return frame.reshape([resolution_dim, resolution[0], resolution[1]])
+        return frame.reshape([resolution[0], resolution[1], resolution_dim])
     '''
   stack_frames
     '''

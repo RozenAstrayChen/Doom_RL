@@ -46,7 +46,7 @@ epsilon = 1.0
 dec_eps = 100000
 min_eps = 0.01
 
-train_episodes = 500
+train_episodes = 2000
 enjoy_episodes = 10
 # Typical Range (Continuous): 512 - 5120
 # Typical Range (Discrete): 32 - 512

@@ -11,7 +11,7 @@ import time
 
 
 class Agent(Process):
-    def __init__(self, map=map_health):
+    def __init__(self, map=map_d_center):
         self.map = map
         self.env = init_doom(map, visable=False)
         self.sess = tf.Session()
@@ -23,7 +23,12 @@ class Agent(Process):
         self.model = PPO_batch(self.sess, self.action_num)
         self.rollout = Rollout(batch=mini_batch)
 
-    def enjoy(self, load=False):
+    def enjoy(self, load_episode=0, render=False):
+        if load_episode != 0:
+            self.model.load_model(load_episode)
+        if render:
+            self.env = init_doom(self.map, visable=True)
+
         #self.env = restart_doom(self.env, self.map, visable=False)
         self.env.new_episode()
         s = self.preprocess(self.env.get_state().screen_buffer)
@@ -34,7 +39,8 @@ class Agent(Process):
             self.env.set_action(self.action_dim[a])
             self.env.advance_action(frame_skip)
             done = self.env.is_episode_finished()
-            #time.sleep(0.12)
+            if render:
+                time.sleep(0.12)
 
             if not done:
                 n_s = self.preprocess(self.env.get_state().screen_buffer)
@@ -107,3 +113,4 @@ class Agent(Process):
 
 agent = Agent()
 agent.run()
+#agent.enjoy(load_episode=2800, render=True)

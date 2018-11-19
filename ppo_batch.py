@@ -22,13 +22,13 @@ class PPO_batch():
         self.sess.run(tf.global_variables_initializer())
     
     def save_model(self, episode):
-        path = './temp/'  + str(episode)
+        path = './temp/' + str(episode)
         name = '/model'
         save_path = path + name
         self.saver.save(self.sess, save_path)
 
     def load_model(self, episode):
-        path = './tmp'  + str(episode)
+        path = './temp/' + str(episode)
         name = '/model'
         save_path = path + name
         self.saver.restore(self.sess, save_path)

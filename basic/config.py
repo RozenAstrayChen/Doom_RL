@@ -21,10 +21,10 @@ map_my_way_home = "./scenarios/my_way_home.cfg"
 in first basic wad i using 30,45
 in second map, i using origin pixel size
 '''
-#resolution = (84, 84)
+resolution = (84, 84)
 #resolution = (64, 64)
 #resolution = (160 ,120)
-resolution = (60, 108)
+#resolution = (60, 108)
 #resolution = (30, 45)
 
 resolution_dim = 3
@@ -36,7 +36,7 @@ learning_rate = 2e-4
 coeff_entropy = 0.02
 coeff_value = 0.5
 gamma = 0.99
-horizon = 128
+horizon = 512
 nupdates = 5
 clip_value = 0.2
 
@@ -48,7 +48,7 @@ train_episodes = 5000
 enjoy_episodes = 10
 # Typical Range (Continuous): 512 - 5120
 # Typical Range (Discrete): 32 - 512
-mini_batch = 32
+mini_batch = 64
 # frame
 frame_skip = 4
 frame_repeat = 12

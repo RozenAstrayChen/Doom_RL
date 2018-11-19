@@ -111,7 +111,7 @@ class Process:
         normalized_frame = cropped_frame/255.0
         
         # Resize
-        preprocessed_frame = skimage.transform.resize(frame, resolution)
+        preprocessed_frame = skimage.transform.resize(normalized_frame, resolution)
         preprocessed_frame = self.frames_reshape(preprocessed_frame)
         
         

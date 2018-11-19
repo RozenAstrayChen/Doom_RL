@@ -110,8 +110,7 @@ class PPO_batch():
                 strides=[4, 4],
                 activation=tf.nn.relu,
                 kernel_initializer=w_initializer,
-                trainable=trainable)
-            
+                trainable=trainable)       
             '''
             20, 20 -> 9, 9
             '''
@@ -124,8 +123,7 @@ class PPO_batch():
                 kernel_initializer=w_initializer,
                 trainable=trainable
             )
-            conv2_flatten = tf.layers.flatten(conv2)
-            
+            #conv2_flatten = tf.layers.flatten(conv2)        
             '''
             9, 9 -> 3, 3
             '''
@@ -138,7 +136,6 @@ class PPO_batch():
                 kernel_initializer=w_initializer,
                 trainable=trainable)
             conv3_flatten = tf.layers.flatten(conv3)
-            
             f_dense = tf.layers.dense(
                 conv3_flatten,
                 512,

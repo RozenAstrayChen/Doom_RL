@@ -7,3 +7,4 @@ learning_tensorflow.py
 not_work/*
 *.pyc
 __pycache__
+temp/*

@@ -103,8 +103,8 @@ class Process:
         
         return s
         '''
-        cropped_frame = frame[80:,:]
-        #cropped_frame = frame[30:-10,30:-30]
+        #cropped_frame = frame[80:,:]
+        cropped_frame = frame[30:-10,30:-30]
         #cropped_frame = frame[15:-5,20:-20]
         
         # Normalize Pixel Values

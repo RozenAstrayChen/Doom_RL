@@ -19,6 +19,12 @@ def init_doom(scenarios=map_basic, visable=False):
     print('Doom initialized')
     return game
 
+def restart_doom(game, scenarios, visable=False):
+    game.close()
+    game = init_doom(scenarios, visable=visable)
+
+    return game
+
 
 def test_env(game):
     print('Test start')

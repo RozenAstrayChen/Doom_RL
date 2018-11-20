@@ -20,7 +20,7 @@ class PPO_batch():
         self.saver = tf.train.Saver()
 
         self.sess.run(tf.global_variables_initializer())
-    
+
     def save_model(self, episode):
         path = './temp/' + str(episode)
         name = '/model'
@@ -91,10 +91,10 @@ class PPO_batch():
             self.optimizer = tf.train.AdamOptimizer(learning_rate).minimize(
                 self.loss)
 
-
     def _init_net(self):
         self.v, self.a_prob = self._init_ac_net('theta')
-        self.v_old, self.a_prob_old = self._init_ac_net('theta_old', trainable=False)
+        self.v_old, self.a_prob_old = self._init_ac_net(
+            'theta_old', trainable=False)
 
     def _init_ac_net(self, scope, trainable=True):
         with tf.variable_scope(scope):
@@ -108,55 +108,74 @@ class PPO_batch():
                 filters=32,
                 kernel_size=[8, 8],
                 strides=[4, 4],
-                activation=tf.nn.relu,
-                kernel_initializer=w_initializer,
-                trainable=trainable)       
+                kernel_initializer=tf.contrib.layers.xavier_initializer_conv2d(
+                ),
+                trainable=trainable,
+                padding='valid',
+                name='conv1')
+            conv1_batchnorm = tf.layers.batch_normalization(
+                conv1, training=trainable, epsilon=1e-5, name='batch_norm1')
+
+            conv1_out = tf.nn.elu(conv1_batchnorm, name="conv1_out")
             '''
             20, 20 -> 9, 9
             '''
             conv2 = tf.layers.conv2d(
-                conv1,
+                conv1_out,
                 filters=64,
                 kernel_size=[4, 4],
                 strides=[2, 2],
-                activation=tf.nn.relu,
-                kernel_initializer=w_initializer,
-                trainable=trainable
-            )
-            #conv2_flatten = tf.layers.flatten(conv2)        
+                kernel_initializer=tf.contrib.layers.xavier_initializer_conv2d(
+                ),
+                trainable=trainable,
+                padding='valid',
+                name='conv2')
+            conv2_batchnorm = tf.layers.batch_normalization(
+                conv2, training=trainable, epsilon=1e-5, name='batch_norm2')
+
+            conv2_out = tf.nn.elu(conv2_batchnorm, name="conv2_out")
             '''
             9, 9 -> 3, 3
             '''
             conv3 = tf.layers.conv2d(
-                conv2,
+                conv2_out,
                 filters=128,
                 kernel_size=[4, 4],
                 strides=[2, 2],
-                activation=tf.nn.relu,
-                kernel_initializer=w_initializer,
-                trainable=trainable)
-            conv3_flatten = tf.layers.flatten(conv3)
+                kernel_initializer=tf.contrib.layers.xavier_initializer_conv2d(
+                ),
+                trainable=trainable,
+                padding='valid',
+                name='conv3')
+            conv3_batchnorm = tf.layers.batch_normalization(
+                conv3, training=trainable, epsilon=1e-5, name='batch_norm3')
+
+            conv3_out = tf.nn.elu(conv3_batchnorm, name="conv3_out")
+
+            conv3_flatten = tf.layers.flatten(conv3_out)
             f_dense = tf.layers.dense(
                 conv3_flatten,
                 512,
-                tf.nn.relu,
-                kernel_initializer=w_initializer,
-                trainable=trainable)
-            
+                tf.nn.elu,
+                kernel_initializer=tf.contrib.layers.xavier_initializer(),
+                trainable=trainable,
+                name='fc1')
+
             value = tf.layers.dense(
                 f_dense,
                 1,
                 activation=None,
-                kernel_initializer=w_initializer,
-                trainable=trainable
-            )
+                kernel_initializer=tf.contrib.layers.xavier_initializer(),
+                trainable=trainable,
+                name='critic')
+
             action = tf.layers.dense(
                 f_dense,
                 self.action_n,
                 activation=tf.nn.softmax,
-                kernel_initializer=w_initializer,
-                trainable=trainable
-            )
+                kernel_initializer=tf.contrib.layers.xavier_initializer(),
+                trainable=trainable,
+                name='actor')
 
             return value, action
 
@@ -165,12 +184,11 @@ class PPO_batch():
         return v[0][0]
 
     def choose_action(self, s):
-        a_prob = self.sess.run(
-            self.a_prob, feed_dict={self.s_in: [s]})
+        a_prob = self.sess.run(self.a_prob, feed_dict={self.s_in: [s]})
         a = np.random.choice(range(a_prob.shape[1]), p=a_prob.ravel())
 
         return a
-    
+
     def calculate_returns(self, rewards, dones, last_value, gamma=0.99):
         rewards = np.array(rewards)
         dones = np.array(dones)
@@ -182,7 +200,7 @@ class PPO_batch():
             returns[i] = gamma * returns[i + 1] * dones[i] + rewards[i]
 
         return returns
-    
+
     def train(self, memory):
         # First, update old theta
         self.sess.run(self.update_params)
@@ -206,17 +224,12 @@ class PPO_batch():
             adv = adv.ravel()
 
             dict = {self.s_in: s, self.a_in: a, self.adv_in: adv}
-            
+
             _, loss, a_loss, c_loss, entropy = self.sess.run(
                 [
                     self.optimizer, self.loss, self.a_loss, self.c_loss,
                     self.entropy
                 ],
                 feed_dict=dict)
-            
-            #self.sess.run([self.optimizer], feed_dict=dict)
-        
 
-        
-        
-    
+            #self.sess.run([self.optimizer], feed_dict=dict)

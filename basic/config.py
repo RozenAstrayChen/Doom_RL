@@ -36,7 +36,7 @@ learning_rate = 2e-4
 coeff_entropy = 0.02
 coeff_value = 0.5
 gamma = 0.99
-horizon = 512
+horizon = 128
 nupdates = 5
 clip_value = 0.2
 
@@ -48,7 +48,7 @@ train_episodes = 5000
 enjoy_episodes = 10
 # Typical Range (Continuous): 512 - 5120
 # Typical Range (Discrete): 32 - 512
-mini_batch = 64
+mini_batch = 32
 # frame
 frame_skip = 4
 frame_repeat = 12

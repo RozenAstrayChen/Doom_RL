@@ -11,7 +11,7 @@ import time
 
 
 class Agent(Process):
-    def __init__(self, map=map_d_center):
+    def __init__(self, map=map_basic):
         self.map = map
         self.env = init_doom(map, visable=False)
         self.sess = tf.Session()
@@ -23,7 +23,7 @@ class Agent(Process):
         self.model = PPO_batch(self.sess, self.action_num)
         self.rollout = Rollout(batch=mini_batch)
 
-    def enjoy(self, load_episode=0, render=False):
+    def test(self, load_episode=0, render=False):
         if load_episode != 0:
             self.model.load_model(load_episode)
         if render:
@@ -36,8 +36,7 @@ class Agent(Process):
 
             a = self.model.choose_action(s)
             # env feeback
-            self.env.set_action(self.action_dim[a])
-            self.env.advance_action(frame_skip)
+            self.env.make_action(self.action_dim[a])
             done = self.env.is_episode_finished()
             if render:
                 time.sleep(0.12)
@@ -68,19 +67,20 @@ class Agent(Process):
 
                 a = self.model.choose_action(s)
                 # env feeback
-                r = self.env.make_action(self.action_dim[a], frame_skip)
+                r = self.env.make_action(self.action_dim[a])
                 #self.env.advance_action(frame_skip)
                 #r = self.env.get_last_reward()
                 done = self.env.is_episode_finished()
 
                 if not done:
                     n_s = self.preprocess(self.env.get_state().screen_buffer)
-                    s = n_s
                 else:
                     n_s = np.zeros(
-                        [resolution[0], resolution[1], resolution_dim])
+                        [resolution[0], resolution[1], resolution_dim], dtype=np.int)
 
                 self.rollout.append(s, a, r, n_s, done)
+
+                s = n_s
 
             if done:
                 last_value = 0
@@ -105,7 +105,7 @@ class Agent(Process):
                 self.model.save_model(episode)
             if episode % 20 == 0 and episode != 0:
                 print('Episode: {} '.format(episode))
-                reward = self.enjoy()
+                reward = self.test()
                 plt_rewards.append(reward)
                 self.plot_durations(plt_rewards)
                 #self.env = restart_doom(self.env, self.map, visable=False)
@@ -113,4 +113,4 @@ class Agent(Process):
 
 agent = Agent()
 agent.run()
-#agent.enjoy(load_episode=2800, render=True)
+#agent.enjoy(load_episode=1400, render=True)

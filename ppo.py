@@ -8,20 +8,15 @@ from basic.process import *
 
 
 class Agent(Process):
-    def __init__(self, map=map_health):
+    def __init__(self, map=map_basic):
         self.mode = 'train'
         self.map = map
         # init env
         self.env = init_doom(map, visable=False)
-        self.env.set_seed(1)
-        '''
+        
         n = self.env.get_available_buttons_size()
         self.action_dim = np.identity(n,dtype=int).tolist()
         self.action_num = n
-        '''
-        n = self.env.get_available_buttons_size()
-        self.action_dim = [list(a) for a in it.product([0, 1], repeat=n)]
-        self.action_num = len(self.action_dim)
 
         self._init_input()
         self._init_nn()
@@ -38,7 +33,7 @@ class Agent(Process):
     def _init_input(self, *args):
         with tf.variable_scope('input'):
             self.s = tf.placeholder(
-                tf.float32, [None] + list(resolution) + [1], name='s')
+                tf.float32, [None] + list(resolution) + [resolution_dim], name='s')
             self.a = tf.placeholder(
                 tf.int32, [
                     None,
@@ -81,16 +76,6 @@ class Agent(Process):
             ]
 
         with tf.variable_scope('actor_loss_func'):
-            '''
-            # one hot a
-            a_one_hot = tf.one_hot(self.a, self.action_num)
-            # cross entropy
-            cross_entropy = tf.nn.softmax_cross_entropy_with_logits_v2(
-                labels=a_one_hot, logits=self.a_logits_eval)
-            # loss func
-            self.a_loss_func = tf.reduce_mean(
-                cross_entropy * self.adv * self.a_p_r)
-            '''
             a_indices = tf.stack(
                 [tf.range(tf.shape(self.a)[0], dtype=tf.int32), self.a],
                 axis=1)
@@ -118,50 +103,75 @@ class Agent(Process):
 
     def _init_actor_net(self, scope, trainable=True):
         with tf.variable_scope(scope):
-            #  kernel initializer
-            w_initializer = tf.random_normal_initializer(0.0, 0.01)
-
-            # first conv
+            '''
+            84, 84 -> 20, 20
+            '''
             conv1 = tf.layers.conv2d(
                 self.s,
                 filters=32,
                 kernel_size=[8, 8],
                 strides=[4, 4],
-                activation=tf.nn.relu,
-                kernel_initializer=w_initializer,
+                kernel_initializer=tf.contrib.layers.xavier_initializer_conv2d(
+                ),
+                padding='valid',
+                name='conv1',
                 trainable=trainable)
+            conv1_batchnorm = tf.layers.batch_normalization(
+                    conv1, training=trainable, epsilon=1e-5, name='batch_norm1')
 
+            conv1_out = tf.nn.elu(conv1_batchnorm, name="conv1_out")
+            '''
+            9, 9 -> 3, 3
+            '''
             conv2 = tf.layers.conv2d(
-                conv1,
+                conv1_out,
                 filters=64,
                 kernel_size=[4, 4],
                 strides=[2, 2],
-                activation=tf.nn.relu,
-                kernel_initializer=w_initializer,
+                kernel_initializer=tf.contrib.layers.xavier_initializer_conv2d(
+                ),
+                padding='valid',
+                name='conv2',
                 trainable=trainable)
-            #conv2_flatten = tf.layers.flatten(conv2)
+            conv2_batchnorm = tf.layers.batch_normalization(
+                conv2, training=trainable, epsilon=1e-5, name='batch_norm2')
+
+            conv2_out = tf.nn.elu(conv2_batchnorm, name="conv2_out")
             
+            '''
+            9, 9 -> 3, 3
+            '''
             conv3 = tf.layers.conv2d(
-                conv2,
-                filters=64,
-                kernel_size=[3, 3],
-                strides=[1, 1],
-                kernel_initializer=w_initializer,
+                conv2_out,
+                filters=128,
+                kernel_size=[4, 4],
+                strides=[2, 2],
+                kernel_initializer=tf.contrib.layers.xavier_initializer_conv2d(
+                ),
+                padding='valid',
+                name='conv3',
                 trainable=trainable)
-            conv3_flatten = tf.layers.flatten(conv3)
+            conv3_batchnorm = tf.layers.batch_normalization(
+                conv3, training=trainable, epsilon=1e-5, name='batch_norm3')
+
+            conv3_out = tf.nn.elu(conv3_batchnorm, name="conv3_out")
+
+            conv3_flatten = tf.layers.flatten(conv3_out)
             
 
             f_dense = tf.layers.dense(
                 conv3_flatten,
                 512,
-                tf.nn.relu,
-                kernel_initializer=w_initializer,
-                trainable=trainable)
+                tf.nn.elu,
+                kernel_initializer=tf.contrib.layers.xavier_initializer(),
+                trainable=trainable,
+                name='fc1')
+
             # action logits
             a_logits = tf.layers.dense(
                 f_dense,
                 self.action_num,
-                kernel_initializer=w_initializer,
+                kernel_initializer=tf.contrib.layers.xavier_initializer(),
                 trainable=trainable)
             # action prob
             a_prob = tf.nn.softmax(a_logits)
@@ -169,39 +179,73 @@ class Agent(Process):
             return a_prob, a_logits
 
     def _init_critic_net(self, scope):
-        #  kernel initializer
-        w_initializer = tf.random_normal_initializer(0.0, 0.01)
+        '''
+        84, 84 -> 20, 20
+        '''
         # first conv
         conv1 = tf.layers.conv2d(
             self.s,
             filters=32,
             kernel_size=[8, 8],
             strides=[4, 4],
-            activation=tf.nn.relu,
-            kernel_initializer=w_initializer)
+            kernel_initializer=tf.contrib.layers.xavier_initializer_conv2d(
+            ),
+            padding='valid',
+            name='conv1')
+        conv1_batchnorm = tf.layers.batch_normalization(
+                conv1, training=True, epsilon=1e-5, name='batch_norm1')
+
+        conv1_out = tf.nn.elu(conv1_batchnorm, name="conv1_out")
+        '''
+        9, 9 -> 3, 3
+        '''
         conv2 = tf.layers.conv2d(
-            conv1,
+            conv1_out,
             filters=64,
             kernel_size=[4, 4],
             strides=[2, 2],
-            activation=tf.nn.relu,
-            kernel_initializer=w_initializer)
-        #conv2_flatten = tf.layers.flatten(conv2)
+            kernel_initializer=tf.contrib.layers.xavier_initializer_conv2d(
+            ),
+            padding='valid',
+            name='conv2')
+        conv2_batchnorm = tf.layers.batch_normalization(
+            conv2, training=True, epsilon=1e-5, name='batch_norm2')
+
+        conv2_out = tf.nn.elu(conv2_batchnorm, name="conv2_out")
         
+        '''
+        9, 9 -> 3, 3
+        '''
         conv3 = tf.layers.conv2d(
-            conv2,
-            filters=64,
+            conv2_out,
+            filters=128,
             kernel_size=[4, 4],
             strides=[2, 2],
-            kernel_initializer=w_initializer)
-        conv3_flatten = tf.layers.flatten(conv3)
+            kernel_initializer=tf.contrib.layers.xavier_initializer_conv2d(
+            ),
+            padding='valid',
+            name='conv3')
+        conv3_batchnorm = tf.layers.batch_normalization(
+            conv3, training=True, epsilon=1e-5, name='batch_norm3')
+
+        conv3_out = tf.nn.elu(conv3_batchnorm, name="conv3_out")
+
+        conv3_flatten = tf.layers.flatten(conv3_out)
         
 
         f_dense = tf.layers.dense(
-            conv3_flatten, 512, tf.nn.relu, kernel_initializer=w_initializer)
+            conv3_flatten,
+            512,
+            tf.nn.elu,
+            kernel_initializer=tf.contrib.layers.xavier_initializer(),
+            name='fc1')
 
         value = tf.layers.dense(
-            f_dense, 1, tf.nn.relu, kernel_initializer=w_initializer)
+            f_dense,
+            1,
+            activation=None,
+            kernel_initializer=tf.contrib.layers.xavier_initializer(),
+            name='critic')
 
         value = tf.reshape(value, [
             -1,
@@ -264,13 +308,13 @@ class Agent(Process):
         self.a_p_r_buffer = []
 
     def save_model(self, episode):
-        path = './tmp'  #+ str(episode)
+        path = './temp/' + str(episode)
         name = '/model'
         save_path = path + name
         self.saver.save(self.session, save_path)
 
     def load_model(self, episode):
-        path = './tmp'  #+ str(episode)
+        path = './temp/' + str(episode)
         name = '/model'
         save_path = path + name
         self.saver.restore(self.session, save_path)
@@ -290,14 +334,12 @@ class Agent(Process):
                         render_flag = True
                     a = self.predict(s)
                     # enviroment feeback
-                    self.env.set_action(self.action_dim[a])
-                    self.env.advance_action(frame_skip)
-                    r = self.env.get_last_reward()
+                    r= self.env.make_action(self.action_dim[a])
                     done = self.env.is_episode_finished()
 
                     if done:
                         # next state doesn't saved
-                        s_n = np.zeros((resolution[0], resolution[1], 3), dtype=np.int)
+                        s_n = np.zeros((resolution[0], resolution[1], resolution_dim), dtype=np.int)
                         self.snapshot(s, a, r, s_n)
                         break
                     else:
@@ -312,7 +354,7 @@ class Agent(Process):
                         episode, self.env.get_total_reward()))
                     plt_rewards.append(self.env.get_total_reward())
                     self.plot_durations(plt_rewards)
-                if episode % 100 == 0 and episode != 0:
+                if episode % 200 == 0 and episode != 0:
                     print('save model!')
                     self.save_model(episode)
             self.plot_save(plt_rewards)
@@ -326,9 +368,7 @@ class Agent(Process):
                 #s = self.frames_reshape(s)
                 while True:
                     a = self.predict(s)
-                    self.env.set_action(self.action_dim[a])
-                    self.env.advance_action(frame_skip)
-                    r = self.env.get_last_reward()
+                    r = self.env.make_action(self.action_dim[a])
                     done = self.env.is_episode_finished()
                     time.sleep(0.12)
                     if done:

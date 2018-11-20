@@ -50,7 +50,7 @@ class Agent(Process):
                 break
         return self.env.get_total_reward()
 
-    def run(self):
+    def run_batch(self):
         plt_rewards = []
         a_loss_collects = []
         c_loss_collects = []
@@ -111,6 +111,9 @@ class Agent(Process):
                 #self.env = restart_doom(self.env, self.map, visable=False)
 
 
+
+
+
 agent = Agent()
-agent.run()
+agent.run_batch()
 #agent.enjoy(load_episode=1400, render=True)

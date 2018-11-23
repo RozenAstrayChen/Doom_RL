@@ -108,55 +108,45 @@ class PPO_batch():
                 filters=32,
                 kernel_size=[8, 8],
                 strides=[4, 4],
+                activation=tf.nn.relu,
                 kernel_initializer=tf.contrib.layers.xavier_initializer_conv2d(
                 ),
                 trainable=trainable,
                 padding='valid',
                 name='conv1')
-            conv1_batchnorm = tf.layers.batch_normalization(
-                conv1, training=trainable, epsilon=1e-5, name='batch_norm1')
-
-            conv1_out = tf.nn.elu(conv1_batchnorm, name="conv1_out")
             '''
             20, 20 -> 9, 9
             '''
             conv2 = tf.layers.conv2d(
-                conv1_out,
+                conv1,
                 filters=64,
                 kernel_size=[4, 4],
                 strides=[2, 2],
+                activation=tf.nn.relu,
                 kernel_initializer=tf.contrib.layers.xavier_initializer_conv2d(
                 ),
                 trainable=trainable,
                 padding='valid',
                 name='conv2')
-            conv2_batchnorm = tf.layers.batch_normalization(
-                conv2, training=trainable, epsilon=1e-5, name='batch_norm2')
-
-            conv2_out = tf.nn.elu(conv2_batchnorm, name="conv2_out")
             '''
             9, 9 -> 3, 3
             '''
             conv3 = tf.layers.conv2d(
-                conv2_out,
+                conv2,
                 filters=128,
                 kernel_size=[4, 4],
                 strides=[2, 2],
+                activation=tf.nn.relu,
                 kernel_initializer=tf.contrib.layers.xavier_initializer_conv2d(
                 ),
                 trainable=trainable,
                 padding='valid',
                 name='conv3')
-            conv3_batchnorm = tf.layers.batch_normalization(
-                conv3, training=trainable, epsilon=1e-5, name='batch_norm3')
-
-            conv3_out = tf.nn.elu(conv3_batchnorm, name="conv3_out")
-
-            conv3_flatten = tf.layers.flatten(conv3_out)
+            conv3_flatten = tf.layers.flatten(conv3)
             f_dense = tf.layers.dense(
                 conv3_flatten,
                 512,
-                tf.nn.elu,
+                activation=tf.nn.relu,
                 kernel_initializer=tf.contrib.layers.xavier_initializer(),
                 trainable=trainable,
                 name='fc1')

@@ -11,7 +11,7 @@ import time
 
 
 class Agent(Process):
-    def __init__(self, map=map_basic):
+    def __init__(self, map=map_health):
         self.map = map
         self.env = init_doom(map, visable=False)
         self.sess = tf.Session()

@@ -85,15 +85,17 @@ class AC(Policy):
                 F.smooth_l1_loss(value[0],
                                  torch.tensor([r]).to(self.device)))
         self.optimizer.zero_grad()
-        loss = torch.stack(policy_losses).sum() + torch.stack(
-            value_losses).sum()
+        
+        a_loss = torch.stack(policy_losses).mean()
+        v_loss = 0.5 *torch.stack(value_losses).mean()
+
+        loss = a_loss + v_loss
         loss.backward()
         self.optimizer.step()
         del self.rewards[:]
         del self.saved_actions[:]
 
-        return loss, torch.stack(value_losses).sum(), torch.stack(
-            policy_losses).sum()
+        return loss, v_loss, a_loss
 
     '''
     Overwrite train model

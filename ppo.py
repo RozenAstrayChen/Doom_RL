@@ -103,33 +103,52 @@ class Agent(Process):
 
     def _init_actor_net(self, scope, trainable=True):
         with tf.variable_scope(scope):
-            
+            '''
+            84, 84 -> 20, 20
+            '''
             conv1 = tf.layers.conv2d(
                 self.s,
                 filters=32,
                 kernel_size=[8, 8],
                 strides=[4, 4],
+                activation=tf.nn.leaky_relu,
                 kernel_initializer=tf.contrib.layers.xavier_initializer_conv2d(
                 ),
                 name='conv1',
                 trainable=trainable)
-            
+            '''
+            9, 9 -> 3, 3
+            '''
             conv2 = tf.layers.conv2d(
                 conv1,
                 filters=64,
                 kernel_size=[4, 4],
                 strides=[2, 2],
+                activation=tf.nn.leaky_relu,
                 kernel_initializer=tf.contrib.layers.xavier_initializer_conv2d(
                 ),
                 name='conv2',
                 trainable=trainable)          
-            conv2_flatten = tf.layers.flatten(conv2)
+            '''
+            9, 9 -> 3, 3
+            '''
+            conv3 = tf.layers.conv2d(
+                conv2,
+                filters=64,
+                kernel_size=[3, 3],
+                strides=[1, 1],
+                activation=tf.nn.leaky_relu,
+                kernel_initializer=tf.contrib.layers.xavier_initializer_conv2d(
+                ),
+                name='conv3',
+                trainable=trainable)
+            conv3_flatten = tf.layers.flatten(conv3)
             
 
             f_dense = tf.layers.dense(
-                conv2_flatten,
+                conv3_flatten,
                 512,
-                activation=tf.nn.relu,
+                activation=tf.nn.leaky_relu,
                 kernel_initializer=tf.contrib.layers.xavier_initializer(),
                 trainable=trainable,
                 name='fc1')
@@ -146,32 +165,52 @@ class Agent(Process):
             return a_prob, a_logits
 
     def _init_critic_net(self, scope):
-        
+        '''
+        84, 84 -> 20, 20
+        '''
         # first conv
         conv1 = tf.layers.conv2d(
             self.s,
             filters=32,
             kernel_size=[8, 8],
             strides=[4, 4],
+            activation=tf.nn.leaky_relu,
             kernel_initializer=tf.contrib.layers.xavier_initializer_conv2d(
             ),
+            padding='valid',
             name='conv1')
-        
+        '''
+        20, 20 -> 9, 9
+        '''
         conv2 = tf.layers.conv2d(
             conv1,
             filters=64,
             kernel_size=[4, 4],
             strides=[2, 2],
+            activation=tf.nn.leaky_relu,
             kernel_initializer=tf.contrib.layers.xavier_initializer_conv2d(
             ),
+            padding='valid',
             name='conv2')
-        conv2_flatten = tf.layers.flatten(conv2)
+        '''
+        9, 9 -> 3, 3
+        '''
+        conv3 = tf.layers.conv2d(
+            conv2,
+            filters=128,
+            kernel_size=[3, 3],
+            strides=[1, 1],
+            activation=tf.nn.leaky_relu,
+            kernel_initializer=tf.contrib.layers.xavier_initializer_conv2d(
+            ),
+            name='conv3')
+        conv3_flatten = tf.layers.flatten(conv3)
         
 
         f_dense = tf.layers.dense(
-            conv2_flatten,
+            conv3_flatten,
             512,
-            activation=tf.nn.elu,
+            activation=tf.nn.leaky_relu,
             kernel_initializer=tf.contrib.layers.xavier_initializer(),
             name='fc1')
 

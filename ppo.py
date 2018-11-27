@@ -136,7 +136,7 @@ class Agent(Process):
             '''
             conv3 = tf.layers.conv2d(
                 conv2,
-                filters=128,
+                filters=64,
                 kernel_size=[4, 4],
                 strides=[2, 2],
                 activation=tf.nn.relu,
@@ -304,7 +304,7 @@ class Agent(Process):
         if self.mode == 'train':
             for episode in range(train_episodes):
                 self.env.new_episode()
-                s = self.preprocess(self.env.get_state().screen_buffer)
+                s = self.preprocess2(self.env.get_state().screen_buffer)
 
                 while True:
                     if episode > 4000 and render_flag == False:
@@ -321,7 +321,7 @@ class Agent(Process):
                         self.snapshot(s, a, r, s_n)
                         break
                     else:
-                        s_n = self.preprocess(
+                        s_n = self.preprocess2(
                             self.env.get_state().screen_buffer)
                         self.snapshot(s, a, r, s_n)
                         s = s_n
@@ -342,7 +342,7 @@ class Agent(Process):
             self.env = init_doom(scenarios=self.map, visable=True)
             for episode in range(watch_episodes):
                 self.env.new_episode()
-                s = self.preprocess(self.env.get_state().screen_buffer)
+                s = self.preprocess2(self.env.get_state().screen_buffer)
                 #s = self.frames_reshape(s)
                 while True:
                     a = self.predict(s)
@@ -354,7 +354,7 @@ class Agent(Process):
                               self.env.get_total_reward())
                         break
                     else:
-                        s_n = self.preprocess(
+                        s_n = self.preprocess2(
                             self.env.get_state().screen_buffer)
                         #s_n = self.frames_reshape(s_n)
                         s = s_n

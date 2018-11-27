@@ -89,20 +89,6 @@ class Process:
     '''
 
     def preprocess(self, frame):
-        '''
-        new_resolution = [resolution[0], resolution[1], 3]
-        s = frame[10:-10,30:-30]
-        #s = scipy.misc.imresize(s, new_resolution)
-        print(s.shape)
-        s = np.reshape(s ,[np.prod(s.shape)]) / 255.0
-        s = skimage.transform.resize(
-            s, resolution)
-        s = s.astype(np.float32)
-
-        s = self.frames_reshape(s)
-        
-        return s
-        '''
         cropped_frame = frame[80:,:]
         #cropped_frame = frame[30:-10,30:-30]
         #cropped_frame = frame[15:-5,20:-20]
@@ -119,6 +105,27 @@ class Process:
     
     def frames_reshape(self, frame):
         return frame.reshape([resolution_dim, resolution[0], resolution[1]])
+    '''
+    tensorflow using
+    '''
+
+    def preprocess2(self, frame):
+        cropped_frame = frame[80:,:]
+        #cropped_frame = frame[30:-10,30:-30]
+        #cropped_frame = frame[15:-5,20:-20]
+        
+        # Normalize Pixel Values
+        normalized_frame = cropped_frame/255.0
+        
+        # Resize
+        preprocessed_frame = skimage.transform.resize(normalized_frame, resolution)
+        preprocessed_frame = self.frames_reshape2(preprocessed_frame)
+        
+        
+        return preprocessed_frame
+    
+    def frames_reshape2(self, frame):
+        return frame.reshape([resolution[0], resolution[1], resolution_dim])
     '''
   stack_frames
     '''

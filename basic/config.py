@@ -27,7 +27,7 @@ resolution = (84, 84)
 #resolution = (60, 108)
 #resolution = (30, 45)
 
-resolution_dim = 1
+resolution_dim = 3
 
 # memory size
 replay_memory_size = 100000

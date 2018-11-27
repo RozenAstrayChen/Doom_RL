@@ -112,9 +112,8 @@ class AC(Policy):
                 self.game.new_episode()
                 train_scores = []
                 while True:
-                    s1 = self.preprocess(self.game.get_state().screen_buffer, True)
-                    
-
+                    s1 = self.preprocess(self.game.get_state().screen_buffer)
+            
                     action_index = self.choose_action(s1)
                     reward = self.game.make_action(self.action_available[action_index])
                     

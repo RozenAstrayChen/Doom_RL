@@ -88,7 +88,7 @@ class Process:
     Subsampling image and convert to numpy types
     '''
 
-    def preprocess(self, frame, torch):
+    def preprocess(self, frame):
         '''
         new_resolution = [resolution[0], resolution[1], 3]
         s = frame[10:-10,30:-30]
@@ -111,14 +111,14 @@ class Process:
         normalized_frame = cropped_frame/255.0
         
         # Resize
-        preprocessed_frame = skimage.transform.resize(frame, resolution)
+        preprocessed_frame = skimage.transform.resize(normalized_frame, resolution)
         preprocessed_frame = self.frames_reshape(preprocessed_frame)
         
         
         return preprocessed_frame
     
     def frames_reshape(self, frame):
-        return frame.reshape([resolution[0], resolution[1]])
+        return frame.reshape([resolution_dim, resolution[0], resolution[1]])
     '''
   stack_frames
     '''

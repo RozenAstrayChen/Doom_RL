@@ -114,7 +114,6 @@ class Agent(Process):
                 activation=tf.nn.relu,
                 kernel_initializer=tf.contrib.layers.xavier_initializer_conv2d(
                 ),
-                padding='valid',
                 name='conv1',
                 trainable=trainable)
             '''
@@ -128,28 +127,13 @@ class Agent(Process):
                 activation=tf.nn.relu,
                 kernel_initializer=tf.contrib.layers.xavier_initializer_conv2d(
                 ),
-                padding='valid',
                 name='conv2',
                 trainable=trainable)          
-            '''
-            9, 9 -> 3, 3
-            '''
-            conv3 = tf.layers.conv2d(
-                conv2,
-                filters=64,
-                kernel_size=[4, 4],
-                strides=[2, 2],
-                activation=tf.nn.relu,
-                kernel_initializer=tf.contrib.layers.xavier_initializer_conv2d(
-                ),
-                padding='valid',
-                name='conv3',
-                trainable=trainable)
-            conv3_flatten = tf.layers.flatten(conv3)
+            conv2_flatten = tf.layers.flatten(conv2)
             
 
             f_dense = tf.layers.dense(
-                conv3_flatten,
+                conv2_flatten,
                 512,
                 activation=tf.nn.relu,
                 kernel_initializer=tf.contrib.layers.xavier_initializer(),
@@ -180,7 +164,6 @@ class Agent(Process):
             activation=tf.nn.relu,
             kernel_initializer=tf.contrib.layers.xavier_initializer_conv2d(
             ),
-            padding='valid',
             name='conv1')
         '''
         20, 20 -> 9, 9
@@ -193,26 +176,12 @@ class Agent(Process):
             activation=tf.nn.relu,
             kernel_initializer=tf.contrib.layers.xavier_initializer_conv2d(
             ),
-            padding='valid',
             name='conv2')
-        '''
-        9, 9 -> 3, 3
-        '''
-        conv3 = tf.layers.conv2d(
-            conv2,
-            filters=128,
-            kernel_size=[4, 4],
-            strides=[2, 2],
-            activation=tf.nn.relu,
-            kernel_initializer=tf.contrib.layers.xavier_initializer_conv2d(
-            ),
-            padding='valid',
-            name='conv3')
-        conv3_flatten = tf.layers.flatten(conv3)
+        conv2_flatten = tf.layers.flatten(conv2)
         
 
         f_dense = tf.layers.dense(
-            conv3_flatten,
+            conv2_flatten,
             512,
             activation=tf.nn.relu,
             kernel_initializer=tf.contrib.layers.xavier_initializer(),

@@ -34,7 +34,7 @@ class AC(Policy):
     def __init__(self, map=map_health):
         super(AC, self).__init__(map)
         self.map = map
-        self.model = ACNet(len(self.action_available)).to(self.device)
+        self.model = ACNet(len(self.action_available)).cuda()
         self.saved_actions = []
         self.rewards = []
         self.optimizer = torch.optim.Adam(
@@ -77,8 +77,8 @@ class AC(Policy):
         for (log_prob, value), r in zip(saved_actions, rewards):
             reward = r - value.item()
 
-            log_prob = log_prob.to(self.device)
-            reward = reward.to(self.device)
+            log_prob = log_prob.cuda()
+            reward = reward.cuda()
 
             policy_losses.append(-log_prob * reward)
             value_losses.append(
@@ -112,19 +112,12 @@ class AC(Policy):
                 self.game.new_episode()
                 train_scores = []
                 while True:
-                    s1 = self.preprocess(self.game.get_state().screen_buffer)
-                    s1 = self.frames_reshape(s1)
+                    s1 = self.preprocess(self.game.get_state().screen_buffer, True)
+                    
 
                     action_index = self.choose_action(s1)
-                    self.game.set_action(
-                        self.action_available[action_index])
-                    self.game.advance_action(frame_skip)
-                    '''
-                    reward shaping
-                    '''
-                    #reward = self.reward_shaping(pervious_health,current_health)
-                    reward = self.game.get_last_reward()
-                    #print(reward)
+                    reward = self.game.make_action(self.action_available[action_index])
+                    
                     
                     self.rewards.append(reward)
 

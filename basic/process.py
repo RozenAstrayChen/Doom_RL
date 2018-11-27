@@ -88,7 +88,7 @@ class Process:
     Subsampling image and convert to numpy types
     '''
 
-    def preprocess(self, frame):
+    def preprocess(self, frame, torch):
         '''
         new_resolution = [resolution[0], resolution[1], 3]
         s = frame[10:-10,30:-30]
@@ -112,34 +112,33 @@ class Process:
         
         # Resize
         preprocessed_frame = skimage.transform.resize(normalized_frame, resolution)
-        preprocessed_frame = self.frames_reshape(preprocessed_frame)
-        
-        
+        if torch is True:
+            preprocessed_frame = frame.reshape([resolution_dim, resolution[0], resolution[1]])
+        else:
+            preprocessed_frame = frame.reshape([resolution[0], resolution[1], resolution_dim])
+
         return preprocessed_frame
-    
-    def frames_reshape(self, frame):
-        return frame.reshape([resolution[0], resolution[1], resolution_dim])
+
     '''
   stack_frames
     '''
     def stack_frames(self, stacked_frames, state, is_new_episode):
-        frame = self.preprocess(state)
         if is_new_episode:
             # Clear our stacked_frames
             stacked_frames = deque([np.zeros((resolution[0],resolution[1]), dtype=np.int) for i in range(stack_size)], maxlen=4)
             
             # Because we're in a new episode, copy the same frame 4x
-            stacked_frames.append(frame)
-            stacked_frames.append(frame)
-            stacked_frames.append(frame)
-            stacked_frames.append(frame)
+            stacked_frames.append(state)
+            stacked_frames.append(state)
+            stacked_frames.append(state)
+            stacked_frames.append(state)
             
             # Stack the frames
             stacked_state = np.stack(stacked_frames, axis=2)
             
         else:
             # Append frame to deque, automatically removes the oldest frame
-            stacked_frames.append(frame)
+            stacked_frames.append(state)
 
             # Build the stacked state (first dimension specifies different frames)
             stacked_state = np.stack(stacked_frames, axis=2) 

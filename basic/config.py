@@ -21,8 +21,8 @@ map_my_way_home = "./scenarios/my_way_home.cfg"
 in first basic wad i using 30,45
 in second map, i using origin pixel size
 '''
-resolution = (84, 84)
-#resolution = (64, 64)
+#resolution = (84, 84)
+resolution = (64, 64)
 #resolution = (160 ,120)
 #resolution = (60, 108)
 #resolution = (30, 45)

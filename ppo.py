@@ -8,7 +8,7 @@ from basic.process import *
 
 
 class Agent(Process):
-    def __init__(self, map=map_health):
+    def __init__(self, map=map_basic):
         self.mode = 'train'
         self.map = map
         # init env

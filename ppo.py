@@ -103,28 +103,22 @@ class Agent(Process):
 
     def _init_actor_net(self, scope, trainable=True):
         with tf.variable_scope(scope):
-            '''
-            84, 84 -> 20, 20
-            '''
+            
             conv1 = tf.layers.conv2d(
                 self.s,
                 filters=32,
                 kernel_size=[8, 8],
                 strides=[4, 4],
-                activation=tf.nn.relu,
                 kernel_initializer=tf.contrib.layers.xavier_initializer_conv2d(
                 ),
                 name='conv1',
                 trainable=trainable)
-            '''
-            9, 9 -> 3, 3
-            '''
+            
             conv2 = tf.layers.conv2d(
                 conv1,
                 filters=64,
                 kernel_size=[4, 4],
                 strides=[2, 2],
-                activation=tf.nn.relu,
                 kernel_initializer=tf.contrib.layers.xavier_initializer_conv2d(
                 ),
                 name='conv2',
@@ -152,28 +146,22 @@ class Agent(Process):
             return a_prob, a_logits
 
     def _init_critic_net(self, scope):
-        '''
-        84, 84 -> 20, 20
-        '''
+        
         # first conv
         conv1 = tf.layers.conv2d(
             self.s,
             filters=32,
             kernel_size=[8, 8],
             strides=[4, 4],
-            activation=tf.nn.relu,
             kernel_initializer=tf.contrib.layers.xavier_initializer_conv2d(
             ),
             name='conv1')
-        '''
-        20, 20 -> 9, 9
-        '''
+        
         conv2 = tf.layers.conv2d(
             conv1,
             filters=64,
             kernel_size=[4, 4],
             strides=[2, 2],
-            activation=tf.nn.relu,
             kernel_initializer=tf.contrib.layers.xavier_initializer_conv2d(
             ),
             name='conv2')
@@ -183,7 +171,7 @@ class Agent(Process):
         f_dense = tf.layers.dense(
             conv2_flatten,
             512,
-            activation=tf.nn.relu,
+            activation=tf.nn.elu,
             kernel_initializer=tf.contrib.layers.xavier_initializer(),
             name='fc1')
 

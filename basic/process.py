@@ -103,22 +103,22 @@ class Process:
         
         return s
         '''
-        #cropped_frame = frame[80:,:]
-        cropped_frame = frame[30:-10,30:-30]
+        cropped_frame = frame[80:,:]
+        #cropped_frame = frame[30:-10,30:-30]
         #cropped_frame = frame[15:-5,20:-20]
         
         # Normalize Pixel Values
         normalized_frame = cropped_frame/255.0
         
         # Resize
-        preprocessed_frame = skimage.transform.resize(normalized_frame, resolution)
+        preprocessed_frame = skimage.transform.resize(frame, resolution)
         preprocessed_frame = self.frames_reshape(preprocessed_frame)
         
         
         return preprocessed_frame
     
     def frames_reshape(self, frame):
-        return frame.reshape([resolution[0], resolution[1], resolution_dim])
+        return frame.reshape([resolution[0], resolution[1]])
     '''
   stack_frames
     '''
@@ -126,7 +126,7 @@ class Process:
         frame = self.preprocess(state)
         if is_new_episode:
             # Clear our stacked_frames
-            stacked_frames = deque([np.zeros((resolution[0],resolution[1]), dtype=np.int) for i in range(stack_size)], maxlen=4)
+            stacked_frames = deque([np.zeros((resolution[0], resolution[1]), dtype=np.int) for i in range(stack_size)], maxlen=4)
             
             # Because we're in a new episode, copy the same frame 4x
             stacked_frames.append(frame)
@@ -135,19 +135,15 @@ class Process:
             stacked_frames.append(frame)
             
             # Stack the frames
-            stacked_state = np.stack(stacked_frames, axis=2)
+            stacked_state = np.stack(stacked_frames, axis=0)
             
         else:
             # Append frame to deque, automatically removes the oldest frame
             stacked_frames.append(frame)
 
             # Build the stacked state (first dimension specifies different frames)
-            stacked_state = np.stack(stacked_frames, axis=2) 
+            stacked_state = np.stack(stacked_frames, axis=0) 
         return stacked_state, stacked_frames
-
-    
-
-   
 
     '''
     save model
@@ -174,41 +170,3 @@ class Process:
         else:
             print('^ run')
 
-def preprocess(frame):
-        
-        cropped_frame = frame[30:-10,30:-30]
-        #cropped_frame = frame[15:-5,20:-20]
-        
-        # Normalize Pixel Values
-        normalized_frame = cropped_frame/255.0
-        
-        # Resize
-        preprocessed_frame = skimage.transform.resize(normalized_frame, resolution)
-        preprocessed_frame = frames_reshape(preprocessed_frame)
-
-       
-        return preprocessed_frame
-
-def frames_reshape(frame):
-        return frame.reshape([3, resolution[0], resolution[1]])
-
-'''
-plt reward immediate
-'''
-
-def plot_durations(rewards):
-    plt.figure(2)
-    plt.clf()
-    durations_t = torch.FloatTensor(rewards)
-    plt.title('Training...')
-    plt.xlabel('Episode*20')
-    plt.ylabel('Duration')
-    plt.plot(durations_t.numpy())
-    # Take 100 episode averages and plot them too
-    """
-    if len(durations_t) >= 100:
-        means = durations_t.unfold(0, 100, 1).mean(1).view(-1)
-        means = torch.cat((torch.zeros(99), means))
-        plt.plot(means.numpy())
-    """
-    plt.pause(0.001)  # pause a bit so that plots are updated

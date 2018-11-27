@@ -27,7 +27,7 @@ resolution = (84, 84)
 #resolution = (60, 108)
 #resolution = (30, 45)
 
-resolution_dim = 3
+resolution_dim = 1
 
 # memory size
 replay_memory_size = 100000
@@ -37,7 +37,7 @@ coeff_entropy = 0.02
 coeff_value = 0.5
 gamma = 0.99
 horizon = 128
-nupdates = 5
+n_steps = 10
 clip_value = 0.2
 
 epsilon = 1.0

@@ -312,7 +312,9 @@ class Agent(Process):
                         render_flag = True
                     a = self.predict(s)
                     # enviroment feeback
-                    r= self.env.make_action(self.action_dim[a])
+                    self.env.set_action(self.action_dim[a])
+                    self.env.advance_action(frame_skip+1)
+                    r = self.env.get_last_reward()
                     done = self.env.is_episode_finished()
 
                     if done:
@@ -346,7 +348,8 @@ class Agent(Process):
                 #s = self.frames_reshape(s)
                 while True:
                     a = self.predict(s)
-                    r = self.env.make_action(self.action_dim[a])
+                    self.env.set_action(self.action_dim[a])
+                    self.env.advance_action(frame_skip+1)
                     done = self.env.is_episode_finished()
                     time.sleep(0.12)
                     if done:

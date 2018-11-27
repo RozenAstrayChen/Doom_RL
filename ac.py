@@ -34,7 +34,7 @@ class AC(Policy):
     def __init__(self, map=map_health):
         super(AC, self).__init__(map)
         self.map = map
-        self.model = ACNet(len(self.action_available)).cuda()
+        self.model = ACNet(len(self.action_available), resolution_dim).cuda()
         self.saved_actions = []
         self.rewards = []
         self.optimizer = torch.optim.Adam(
